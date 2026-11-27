@@ -1,0 +1,1914 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Exambro VIP • developer #diks</title>
+  <style>
+    :root {
+      --bg: #09090b;
+      --surface: #121217;
+      --surface-2: #1c1c24;
+      --border: rgba(255, 255, 255, 0.09);
+      --primary: #6366f1;
+      --accent: #06b6d4;
+      --success: #10b981;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+      --text: #f4f4f5;
+      --muted: #a1a1aa;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
+    }
+
+    body {
+      background: radial-gradient(circle at top right, #1e1b4b 0%, var(--bg) 55%);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 16px 16px 96px;
+      overflow-x: hidden;
+    }
+
+    /* Kunci seluruh fitur sebelum mengetik nama */
+    .app-locked {
+      filter: blur(8px);
+      pointer-events: none;
+      user-select: none;
+      opacity: 0.45;
+      transition: filter 0.6s ease, opacity 0.6s ease;
+    }
+
+    /* ================= TOP TOAST ================= */
+    .top-toast {
+      position: fixed;
+      top: -80px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: linear-gradient(135deg, #059669, #10b981);
+      color: #ffffff;
+      padding: 10px 18px;
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 10px 30px rgba(16, 185, 129, 0.35);
+      z-index: 10000;
+      transition: top 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+      white-space: nowrap;
+    }
+
+    .top-toast.warn {
+      background: linear-gradient(135deg, #d97706, #f59e0b);
+      box-shadow: 0 10px 30px rgba(245, 158, 11, 0.35);
+    }
+
+    .top-toast.show {
+      top: 18px;
+    }
+
+    /* ================= MODAL WAJIB KETIK NAMA (SLIDER MUNCUL PERLAHAN) ================= */
+    .gate-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(5, 5, 10, 0.82);
+      backdrop-filter: blur(10px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 9500;
+      padding: 16px;
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+      transition: opacity 0.7s ease, visibility 0.7s ease;
+    }
+
+    .gate-overlay.open {
+      opacity: 1;
+      visibility: visible;
+      pointer-events: auto;
+    }
+
+    .gate-card {
+      width: 100%;
+      max-width: 390px;
+      background: var(--surface);
+      border: 1px solid rgba(245, 158, 11, 0.45);
+      border-radius: 22px;
+      padding: 24px 20px;
+      box-shadow: 0 25px 65px rgba(0, 0, 0, 0.75);
+      transform: translateY(55px) scale(0.96);
+      opacity: 0;
+      transition: transform 0.8s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.8s ease;
+    }
+
+    .gate-overlay.open .gate-card {
+      transform: translateY(0) scale(1);
+      opacity: 1;
+    }
+
+    .gate-badge-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 14px;
+    }
+
+    .gate-vip-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.4px;
+      padding: 4px 10px;
+      border-radius: 999px;
+      background: linear-gradient(135deg, rgba(99, 102, 241, 0.22), rgba(6, 182, 212, 0.22));
+      border: 1px solid rgba(6, 182, 212, 0.4);
+      color: #67e8f9;
+    }
+
+    .gate-warn-banner {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      background: rgba(245, 158, 11, 0.12);
+      border: 1px solid rgba(245, 158, 11, 0.35);
+      border-radius: 12px;
+      padding: 12px;
+      margin-bottom: 16px;
+    }
+
+    .gate-warn-banner svg {
+      flex-shrink: 0;
+      color: var(--warning);
+      margin-top: 1px;
+    }
+
+    .gate-warn-text h2 {
+      font-size: 14px;
+      font-weight: 700;
+      color: #fde68a;
+      margin-bottom: 4px;
+    }
+
+    .gate-warn-text p {
+      font-size: 12px;
+      color: #d4d4d8;
+      line-height: 1.45;
+    }
+
+    .name-label {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--muted);
+      margin-bottom: 8px;
+      display: block;
+    }
+
+    .gate-error {
+      font-size: 12px;
+      color: #fca5a5;
+      margin-bottom: 12px;
+      display: none;
+    }
+
+    /* ================= HEADER ================= */
+    .app-header {
+      max-width: 860px;
+      margin: 0 auto 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 16px;
+      background: rgba(18, 18, 23, 0.8);
+      backdrop-filter: blur(12px);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .brand-wrap {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .brand-logo {
+      width: 34px;
+      height: 34px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, var(--primary), var(--accent));
+      display: grid;
+      place-items: center;
+      flex-shrink: 0;
+    }
+
+    .brand-text h1 {
+      font-size: 14.5px;
+      font-weight: 700;
+      letter-spacing: 0.2px;
+    }
+
+    .brand-text span {
+      font-size: 11px;
+      color: var(--accent);
+      font-weight: 600;
+    }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .user-pill {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(16, 185, 129, 0.12);
+      border: 1px solid rgba(16, 185, 129, 0.35);
+      color: #6ee7b7;
+      padding: 5px 10px;
+      border-radius: 999px;
+      font-size: 11.5px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .mode-switch-pill {
+      display: flex;
+      background: var(--surface-2);
+      padding: 3px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      gap: 4px;
+    }
+
+    .pill-btn {
+      background: transparent;
+      border: none;
+      color: var(--muted);
+      font-size: 11.5px;
+      font-weight: 600;
+      padding: 6px 10px;
+      border-radius: 7px;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+
+    .pill-btn.active {
+      background: linear-gradient(135deg, var(--primary), var(--accent));
+      color: #fff;
+    }
+
+    /* ================= MAIN CONTAINER ================= */
+    .main-container {
+      max-width: 860px;
+      margin: 0 auto;
+    }
+
+    .view-section {
+      display: none;
+    }
+
+    .view-section.active {
+      display: block;
+      animation: slowSlideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    @keyframes slowSlideUp {
+      from { opacity: 0; transform: translateY(22px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .card {
+      background: rgba(18, 18, 23, 0.85);
+      backdrop-filter: blur(14px);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 22px;
+      box-shadow: 0 20px 45px rgba(0, 0, 0, 0.45);
+    }
+
+    /* ================= HOME: UJIAN & WEB ================= */
+    .exam-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 18px;
+      padding-bottom: 14px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .exam-title {
+      font-size: 15px;
+      font-weight: 700;
+    }
+
+    .progress-chip {
+      font-size: 12px;
+      font-weight: 600;
+      padding: 5px 12px;
+      border-radius: 999px;
+      background: rgba(99, 102, 241, 0.16);
+      color: #a5b4fc;
+      border: 1px solid rgba(99, 102, 241, 0.35);
+    }
+
+    .question-text {
+      font-size: 17px;
+      font-weight: 600;
+      line-height: 1.55;
+      margin-bottom: 18px;
+    }
+
+    .options-grid {
+      display: grid;
+      gap: 10px;
+    }
+
+    .option-btn {
+      width: 100%;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 13px 15px;
+      border-radius: 12px;
+      text-align: left;
+      font-size: 14.5px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      transition: all 0.2s ease;
+    }
+
+    .option-btn:hover:not(:disabled) {
+      border-color: var(--accent);
+      background: rgba(6, 182, 212, 0.08);
+    }
+
+    .option-btn.correct {
+      background: rgba(16, 185, 129, 0.16);
+      border-color: var(--success);
+      color: #6ee7b7;
+    }
+
+    .option-btn.wrong {
+      background: rgba(239, 68, 68, 0.16);
+      border-color: var(--danger);
+      color: #fca5a5;
+    }
+
+    .opt-key {
+      width: 26px;
+      height: 26px;
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.07);
+      display: grid;
+      place-items: center;
+      font-size: 12px;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+
+    .ai-note {
+      margin-top: 14px;
+      padding: 12px 14px;
+      border-radius: 10px;
+      background: rgba(6, 182, 212, 0.09);
+      border-left: 3px solid var(--accent);
+      font-size: 13px;
+      color: #cffafe;
+      display: none;
+    }
+
+    .web-view-wrap {
+      display: none;
+    }
+
+    .web-view-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+    }
+
+    .web-url-badge {
+      font-size: 12px;
+      color: var(--muted);
+      background: var(--surface-2);
+      padding: 6px 12px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      flex: 1;
+    }
+
+    .web-iframe {
+      width: 100%;
+      height: 62vh;
+      min-height: 360px;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      background: #ffffff;
+    }
+
+    /* ================= MENU RIWAYAT UJIAN ================= */
+    .history-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      padding-bottom: 14px;
+      margin-bottom: 16px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .history-title-wrap {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .history-title-wrap h2 {
+      font-size: 16px;
+      font-weight: 700;
+    }
+
+    .history-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .history-item {
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 14px;
+      transition: border-color 0.2s;
+      cursor: pointer;
+    }
+
+    .history-item:hover {
+      border-color: rgba(6, 182, 212, 0.4);
+    }
+
+    .history-item-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .history-meta {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .history-date {
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .history-badges {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .history-mode-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 11px;
+      font-weight: 600;
+      color: #a5f3fc;
+      background: rgba(6, 182, 212, 0.12);
+      padding: 3px 9px;
+      border-radius: 999px;
+    }
+
+    .history-user-badge {
+      font-size: 11px;
+      font-weight: 600;
+      color: #c7d2fe;
+      background: rgba(99, 102, 241, 0.18);
+      padding: 3px 9px;
+      border-radius: 999px;
+    }
+
+    .history-score {
+      font-size: 14px;
+      font-weight: 700;
+      color: #6ee7b7;
+      background: rgba(16, 185, 129, 0.14);
+      border: 1px solid rgba(16, 185, 129, 0.35);
+      padding: 6px 12px;
+      border-radius: 10px;
+    }
+
+    .history-details {
+      display: none;
+      margin-top: 12px;
+      padding-top: 10px;
+      border-top: 1px solid var(--border);
+      font-size: 12.5px;
+      color: #d4d4d8;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .history-item.expanded .history-details {
+      display: flex;
+    }
+
+    .detail-line {
+      padding: 8px 10px;
+      border-radius: 8px;
+      background: rgba(9, 9, 11, 0.55);
+      border-left: 3px solid var(--success);
+    }
+
+    .detail-line.is-wrong {
+      border-left-color: var(--danger);
+    }
+
+    .empty-history {
+      text-align: center;
+      padding: 36px 16px;
+      color: var(--muted);
+      font-size: 13.5px;
+    }
+
+    .empty-history svg {
+      margin-bottom: 10px;
+      opacity: 0.5;
+    }
+
+    /* ================= MENU LINK ================= */
+    .link-card {
+      max-width: 520px;
+      margin: 0 auto;
+    }
+
+    .link-card h2 {
+      font-size: 16px;
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .link-card p {
+      font-size: 12.5px;
+      color: var(--muted);
+      margin-bottom: 16px;
+    }
+
+    .input-modern {
+      width: 100%;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 12px 14px;
+      border-radius: 12px;
+      font-size: 13.5px;
+      outline: none;
+      margin-bottom: 14px;
+    }
+
+    .input-modern:focus {
+      border-color: var(--accent);
+    }
+
+    .toggle-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: var(--surface-2);
+      padding: 10px 14px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      margin-bottom: 16px;
+      font-size: 13px;
+    }
+
+    .link-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .btn-modern {
+      border: none;
+      border-radius: 11px;
+      padding: 11px 14px;
+      font-size: 13px;
+      font-weight: 600;
+      color: #fff;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: transform 0.15s, opacity 0.2s;
+    }
+
+    .btn-modern:active { transform: scale(0.97); }
+    .btn-save { background: linear-gradient(135deg, #4f46e5, #6366f1); }
+    .btn-run { background: linear-gradient(135deg, #059669, #10b981); }
+    .btn-danger-soft {
+      background: rgba(239, 68, 68, 0.15);
+      border: 1px solid rgba(239, 68, 68, 0.35);
+      color: #fca5a5;
+      padding: 7px 12px;
+      font-size: 12px;
+    }
+    .btn-ghost {
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 7px 12px;
+      font-size: 12px;
+    }
+
+    /* ================= TOMBOL LOGO ROBOT + MENU SLIDER PERLAHAN ================= */
+    .robot-anchor {
+      position: fixed;
+      z-index: 6000;
+      user-select: none;
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+      transform: translateY(25px);
+      transition: opacity 0.7s ease, transform 0.7s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.7s ease;
+    }
+
+    .robot-anchor.unlocked {
+      opacity: 1;
+      visibility: visible;
+      pointer-events: auto;
+      transform: translateY(0);
+    }
+
+    .robot-fab {
+      width: 64px;
+      height: 64px;
+      border-radius: 20px;
+      background: linear-gradient(145deg, #1e1b4b, #0f172a);
+      border: 1.5px solid rgba(6, 182, 212, 0.65);
+      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.55), 0 0 20px rgba(99, 102, 241, 0.35);
+      display: grid;
+      place-items: center;
+      cursor: grab;
+      touch-action: none;
+      transition: transform 0.25s ease, box-shadow 0.25s ease;
+    }
+
+    .robot-fab:hover {
+      box-shadow: 0 14px 36px rgba(0, 0, 0, 0.65), 0 0 26px rgba(6, 182, 212, 0.55);
+    }
+
+    .robot-fab:active { cursor: grabbing; }
+
+    .robot-fab.thinking {
+      animation: robotPulse 0.45s infinite alternate;
+    }
+
+    @keyframes robotPulse {
+      from { transform: scale(1); border-color: #06b6d4; }
+      to { transform: scale(1.08); border-color: #10b981; }
+    }
+
+    .robot-menu {
+      position: absolute;
+      bottom: 74px;
+      left: 50%;
+      transform: translateX(-50%) translateY(22px) scale(0.94);
+      width: 248px;
+      background: rgba(18, 18, 24, 0.96);
+      backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      border-radius: 16px;
+      padding: 12px;
+      box-shadow: 0 18px 45px rgba(0, 0, 0, 0.65);
+      opacity: 0;
+      pointer-events: none;
+      transition: transform 0.55s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.5s ease;
+      display: flex;
+      flex-direction: column;
+      gap: 9px;
+    }
+
+    .robot-menu.open {
+      opacity: 1;
+      pointer-events: auto;
+      transform: translateX(-50%) translateY(0) scale(1);
+    }
+
+    .menu-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-bottom: 7px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .menu-head-title {
+      font-size: 12px;
+      font-weight: 700;
+      color: #e4e4e7;
+    }
+
+    .menu-dev-tag {
+      font-size: 10px;
+      color: var(--accent);
+      font-weight: 600;
+    }
+
+    .menu-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 12px;
+      color: #d4d4d8;
+      background: rgba(255, 255, 255, 0.04);
+      padding: 7px 10px;
+      border-radius: 10px;
+    }
+
+    .switch {
+      position: relative;
+      display: inline-block;
+      width: 38px;
+      height: 20px;
+      flex-shrink: 0;
+    }
+
+    .switch input { opacity: 0; width: 0; height: 0; }
+
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      inset: 0;
+      background: #3f3f46;
+      border-radius: 20px;
+      transition: 0.25s;
+    }
+
+    .slider:before {
+      content: "";
+      position: absolute;
+      height: 14px;
+      width: 14px;
+      left: 3px;
+      bottom: 3px;
+      background: #fff;
+      border-radius: 50%;
+      transition: 0.25s;
+    }
+
+    input:checked + .slider {
+      background: linear-gradient(90deg, var(--primary), var(--accent));
+    }
+
+    input:checked + .slider:before {
+      transform: translateX(18px);
+    }
+
+    .sec-input {
+      width: 48px;
+      background: #09090b;
+      border: 1px solid var(--border);
+      color: #fff;
+      border-radius: 7px;
+      padding: 3px 6px;
+      font-size: 12px;
+      text-align: center;
+      font-weight: 600;
+    }
+
+    .size-btn-group {
+      display: flex;
+      gap: 4px;
+    }
+
+    .mini-square {
+      width: 24px;
+      height: 24px;
+      border-radius: 7px;
+      border: 1px solid var(--border);
+      background: #09090b;
+      color: #fff;
+      font-size: 13px;
+      cursor: pointer;
+    }
+
+    .menu-btn-primary {
+      width: 100%;
+      border: none;
+      border-radius: 10px;
+      padding: 9px;
+      font-size: 12px;
+      font-weight: 600;
+      color: #fff;
+      background: linear-gradient(135deg, var(--primary), var(--accent));
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+
+    .menu-btn-auto {
+      width: 100%;
+      border: 1px solid rgba(16, 185, 129, 0.45);
+      border-radius: 10px;
+      padding: 7px;
+      font-size: 11.5px;
+      font-weight: 600;
+      background: rgba(16, 185, 129, 0.12);
+      color: #6ee7b7;
+      cursor: pointer;
+    }
+
+    .menu-btn-auto.active {
+      background: var(--success);
+      color: #052e16;
+    }
+
+    .robot-status-pill {
+      font-size: 10.5px;
+      text-align: center;
+      color: var(--accent);
+      font-weight: 600;
+    }
+
+    /* ================= POP-UP TENGAH: SEMUA UJIAN TELAH SELESAI ================= */
+    .finish-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.72);
+      backdrop-filter: blur(6px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 8500;
+      padding: 20px;
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+      transition: opacity 0.65s ease, visibility 0.65s ease;
+    }
+
+    .finish-overlay.open {
+      opacity: 1;
+      visibility: visible;
+      pointer-events: auto;
+    }
+
+    .finish-modal {
+      width: 100%;
+      max-width: 340px;
+      background: var(--surface);
+      border: 1px solid rgba(16, 185, 129, 0.4);
+      border-radius: 20px;
+      padding: 24px 20px;
+      text-align: center;
+      box-shadow: 0 25px 60px rgba(0, 0, 0, 0.65);
+      transform: translateY(40px) scale(0.95);
+      opacity: 0;
+      transition: transform 0.75s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.75s ease;
+    }
+
+    .finish-overlay.open .finish-modal {
+      transform: translateY(0) scale(1);
+      opacity: 1;
+    }
+
+    .finish-icon {
+      width: 56px;
+      height: 56px;
+      margin: 0 auto 14px;
+      border-radius: 16px;
+      background: rgba(16, 185, 129, 0.15);
+      border: 1px solid rgba(16, 185, 129, 0.4);
+      display: grid;
+      place-items: center;
+      color: var(--success);
+    }
+
+    .finish-modal h2 {
+      font-size: 17px;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+
+    .finish-modal p {
+      font-size: 13px;
+      color: var(--muted);
+      margin-bottom: 14px;
+    }
+
+    .finish-dev {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--accent);
+      background: rgba(6, 182, 212, 0.1);
+      padding: 4px 10px;
+      border-radius: 999px;
+      margin-bottom: 16px;
+    }
+
+    .finish-actions {
+      display: flex;
+      gap: 10px;
+    }
+
+    /* ================= MENU BAWAH (HOME, RIWAYAT, LINK) ================= */
+    .bottom-nav {
+      position: fixed;
+      bottom: 14px;
+      left: 50%;
+      transform: translateX(-50%);
+      max-width: calc(100vw - 24px);
+      background: rgba(18, 18, 24, 0.92);
+      backdrop-filter: blur(16px);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 6px 8px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      box-shadow: 0 12px 35px rgba(0, 0, 0, 0.55);
+      z-index: 5000;
+    }
+
+    .nav-item {
+      border: none;
+      background: transparent;
+      color: var(--muted);
+      padding: 8px 14px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      font-size: 12.5px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      white-space: nowrap;
+    }
+
+    .nav-item.active {
+      background: linear-gradient(135deg, rgba(99, 102, 241, 0.25), rgba(6, 182, 212, 0.22));
+      color: #ffffff;
+      border: 1px solid rgba(6, 182, 212, 0.35);
+    }
+
+    .nav-dev-divider {
+      font-size: 10.5px;
+      color: #71717a;
+      padding: 0 8px;
+      border-left: 1px solid var(--border);
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    @media (max-width: 480px) {
+      .nav-dev-divider { display: none; }
+      .nav-item { padding: 8px 12px; font-size: 12px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- TOP TOAST -->
+  <div id="topToast" class="top-toast">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+      <polyline points="20 6 9 17 4 12"></polyline>
+    </svg>
+    <span id="toastText">SUCCESS</span>
+  </div>
+
+  <!-- MODAL WAJIB KETIK NAMA (MUNCUL PERLAHAN SLIDER) -->
+  <div id="nameGateOverlay" class="gate-overlay">
+    <div class="gate-card">
+      <div class="gate-badge-row">
+        <div class="gate-vip-pill">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+          </svg>
+          Exambro VIP
+        </div>
+        <span class="menu-dev-tag">developer #diks</span>
+      </div>
+
+      <div class="gate-warn-banner">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+          <line x1="12" y1="9" x2="12" y2="13"></line>
+          <line x1="12" y1="17" x2="12.01" y2="17"></line>
+        </svg>
+        <div class="gate-warn-text">
+          <h2>Peringatan: Wajib Ketik Nama Dulu</h2>
+          <p>Fitur Exambro VIP belum diaktifkan. Ketik nama lengkap Anda sendiri terlebih dahulu sebelum melanjutkan.</p>
+        </div>
+      </div>
+
+      <label for="customNameInput" class="name-label">Ketik Nama Anda:</label>
+      <input type="text" id="customNameInput" class="input-modern" style="margin-bottom:10px;" placeholder="Ketik nama lengkap Anda di sini..." autocomplete="off" />
+      <div id="gateError" class="gate-error">Wajib ketik nama Anda terlebih dahulu!</div>
+
+      <button class="btn-modern btn-save" style="width:100%;" onclick="confirmNameSelection()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+          <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+        </svg>
+        Aktifkan Exambro VIP
+      </button>
+    </div>
+  </div>
+
+  <!-- WRAPPER UTAMA (TERKUNCI SEBELUM KETIK NAMA) -->
+  <div id="appShell" class="app-locked">
+
+    <!-- HEADER -->
+    <header class="app-header">
+      <div class="brand-wrap">
+        <div class="brand-logo">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+          </svg>
+        </div>
+        <div class="brand-text">
+          <h1>Exambro VIP</h1>
+          <span>developer #diks</span>
+        </div>
+      </div>
+
+      <div class="header-right">
+        <button class="user-pill" onclick="openNameGateForSwitch()" title="Klik untuk ganti nama">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+            <circle cx="12" cy="7" r="4"></circle>
+          </svg>
+          <span id="activeUserNameLabel">Belum diketik</span>
+        </button>
+
+        <div class="mode-switch-pill">
+          <button id="pillExam" class="pill-btn active" onclick="setHomeMode('exam')">Ujian</button>
+          <button id="pillWeb" class="pill-btn" onclick="setHomeMode('web')">Web Link</button>
+        </div>
+      </div>
+    </header>
+
+    <!-- MAIN CONTENT -->
+    <main class="main-container">
+
+      <!-- TAB HOME -->
+      <section id="homeSection" class="view-section active">
+        <div id="examView" class="card">
+          <div class="exam-top">
+            <div class="exam-title">Evaluasi Halaman Pelajaran</div>
+            <div class="progress-chip" id="progressChip">Soal 1 / 5</div>
+          </div>
+          <div class="question-text" id="questionText">Memuat soal...</div>
+          <div class="options-grid" id="optionsGrid"></div>
+          <div class="ai-note" id="aiNote"></div>
+        </div>
+
+        <div id="webView" class="card web-view-wrap">
+          <div class="web-view-bar">
+            <div class="web-url-badge" id="activeUrlLabel">Belum ada link dijalankan</div>
+            <div style="display:flex; gap:8px;">
+              <a id="openTabFallback" href="#" target="_blank" rel="noopener" class="btn-modern btn-ghost" style="text-decoration:none;">Buka Tab Baru</a>
+              <button class="btn-modern btn-ghost" onclick="setHomeMode('exam')">Mode Ujian</button>
+            </div>
+          </div>
+          <iframe id="homeIframe" class="web-iframe" src="about:blank" title="Tampilan Web Home"></iframe>
+        </div>
+      </section>
+
+      <!-- TAB RIWAYAT UJIAN -->
+      <section id="historySection" class="view-section">
+        <div class="card">
+          <div class="history-header">
+            <div class="history-title-wrap">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#06b6d4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <polyline points="12 6 12 12 16 14"></polyline>
+              </svg>
+              <h2>Riwayat Ujian</h2>
+            </div>
+            <button class="btn-modern btn-danger-soft" onclick="clearHistory()">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="3 6 5 6 21 6"></polyline>
+                <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path>
+              </svg>
+              Hapus Semua
+            </button>
+          </div>
+
+          <div id="historyList" class="history-list"></div>
+        </div>
+      </section>
+
+      <!-- TAB LINK -->
+      <section id="linkSection" class="view-section">
+        <div class="card link-card">
+          <h2>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#06b6d4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
+              <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
+            </svg>
+            Pengaturan Link Pelajaran
+          </h2>
+          <p>Masukkan link halaman pelajaran, simpan, lalu jalankan di tampilan Home.</p>
+
+          <input type="url" id="urlInput" class="input-modern" placeholder="https://contoh-web-pelajaran.com" />
+
+          <!-- SWITCH TIDAK OTOMATIS ON (DEFAULT OFF) -->
+          <div class="toggle-row">
+            <span>Auto Run ke Home saat Save / Buka</span>
+            <label class="switch">
+              <input type="checkbox" id="autoRunToggle" onchange="persistSettings()" />
+              <span class="slider"></span>
+            </label>
+          </div>
+
+          <div class="link-actions">
+            <button class="btn-modern btn-save" onclick="saveUrl()">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+                <polyline points="17 21 17 13 7 13 7 21"></polyline>
+                <polyline points="7 3 7 8 15 8"></polyline>
+              </svg>
+              Save Link
+            </button>
+            <button class="btn-modern btn-run" onclick="runUrlToHome()">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polygon points="5 3 19 12 5 21 5 3"></polygon>
+              </svg>
+              Run di Home
+            </button>
+          </div>
+        </div>
+      </section>
+
+    </main>
+
+    <!-- MENU BAWAH (HOME, RIWAYAT, LINK) -->
+    <nav class="bottom-nav">
+      <button id="navHome" class="nav-item active" onclick="switchBottomTab('home')">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+          <polyline points="9 22 9 12 15 12 15 22"></polyline>
+        </svg>
+        Home
+      </button>
+
+      <button id="navHistory" class="nav-item" onclick="switchBottomTab('history')">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"></circle>
+          <polyline points="12 6 12 12 16 14"></polyline>
+        </svg>
+        Riwayat
+      </button>
+
+      <button id="navLink" class="nav-item" onclick="switchBottomTab('link')">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
+          <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
+        </svg>
+        Link
+      </button>
+
+      <span class="nav-dev-divider">developer #diks</span>
+    </nav>
+  </div>
+
+  <!-- TOMBOL LOGO ROBOT + MENU RINGKAS -->
+  <div id="robotAnchor" class="robot-anchor">
+    <div id="robotMenu" class="robot-menu">
+      <div class="menu-head">
+        <span class="menu-head-title">Exambro VIP AI</span>
+        <span class="menu-dev-tag">developer #diks</span>
+      </div>
+
+      <!-- SWITCH TIDAK OTOMATIS ON (DEFAULT OFF) -->
+      <div class="menu-row">
+        <span>Mode AI Akurat (1d)</span>
+        <label class="switch">
+          <input type="checkbox" id="accurateToggle" onchange="persistSettings()" />
+          <span class="slider"></span>
+        </label>
+      </div>
+
+      <div class="menu-row">
+        <span>Custom Detik</span>
+        <input type="number" id="customSec" class="sec-input" min="1" max="30" value="2" onchange="persistSettings()" />
+      </div>
+
+      <div class="menu-row">
+        <span>Ukuran Logo</span>
+        <div class="size-btn-group">
+          <button class="mini-square" onclick="scaleRobot(-0.15)">-</button>
+          <button class="mini-square" onclick="scaleRobot(0.15)">+</button>
+        </div>
+      </div>
+
+      <button class="menu-btn-primary" onclick="triggerAiSolve()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+        </svg>
+        Jawab AI (1 Detik)
+      </button>
+
+      <button id="autoSolveBtn" class="menu-btn-auto" onclick="toggleAutoSolve()">
+        Auto Jawab: OFF
+      </button>
+
+      <div id="robotStatus" class="robot-status-pill">Siap</div>
+    </div>
+
+    <div id="robotFab" class="robot-fab" title="Klik untuk buka menu & suara AI • Geser untuk pindah">
+      <svg width="34" height="34" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <line x1="50" y1="10" x2="50" y2="24" stroke="#06B6D4" stroke-width="6" stroke-linecap="round"/>
+        <circle cx="50" cy="10" r="6" fill="#10B981"/>
+        <rect x="18" y="24" width="64" height="52" rx="16" fill="#0F172A" stroke="#06B6D4" stroke-width="5"/>
+        <rect x="28" y="38" width="44" height="22" rx="8" fill="#1E293B"/>
+        <circle cx="40" cy="49" r="5" fill="#38BDF8"/>
+        <circle cx="60" cy="49" r="5" fill="#38BDF8"/>
+        <path d="M39 67C43 71 57 71 61 67" stroke="#10B981" stroke-width="4.5" stroke-linecap="round"/>
+      </svg>
+    </div>
+  </div>
+
+  <!-- POP-UP TENGAH: SEMUA UJIAN TELAH SELESAI -->
+  <div id="finishModal" class="finish-overlay">
+    <div class="finish-modal">
+      <div class="finish-icon">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+          <polyline points="22 4 12 14.01 9 11.01"></polyline>
+        </svg>
+      </div>
+      <h2>Semua ujian telah selesai</h2>
+      <p id="finishScoreText">Seluruh soal berhasil diselesaikan.</p>
+      <div class="finish-dev">Exambro VIP • developer #diks</div>
+      <div class="finish-actions">
+        <button class="btn-modern btn-ghost" style="flex:1;" onclick="viewHistoryFromFinish()">Lihat Riwayat</button>
+        <button class="btn-modern btn-save" style="flex:1;" onclick="restartExam()">Ulangi Ujian</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    /* ================= KONSTANTA STORAGE ================= */
+    const STORAGE_KEYS = {
+      USER_NAME: "evip_user_name",
+      EXAM_STATE: "evip_exam_state",
+      HISTORY: "evip_exam_history",
+      SAVED_LINK: "evip_saved_link",
+      SETTINGS: "evip_settings",
+      NAV_STATE: "evip_nav_state"
+    };
+
+    const questions = [
+      {
+        q: "1. Hasil dari (15 × 4) + 20 : 2 adalah...",
+        options: ["40", "70", "80", "55"],
+        answer: 1,
+        explain: "(15 × 4) + (20 : 2) = 60 + 10 = 70."
+      },
+      {
+        q: "2. Perubahan wujud benda dari gas menjadi cair disebut...",
+        options: ["Menyublim", "Menguap", "Mengembun", "Membeku"],
+        answer: 2,
+        explain: "Mengembun adalah perubahan wujud dari gas ke cair."
+      },
+      {
+        q: "3. Kepanjangan dari HTTP pada jaringan internet adalah...",
+        options: [
+          "HyperText Transfer Protocol",
+          "High Transmission Text Program",
+          "Hyperlink Terminal Process",
+          "Host Transfer Type Protocol"
+        ],
+        answer: 0,
+        explain: "HTTP = HyperText Transfer Protocol."
+      },
+      {
+        q: "4. Kalimat yang memuat ide pokok paragraf disebut...",
+        options: ["Kalimat penjelas", "Kalimat utama", "Kalimat majemuk", "Kalimat pasif"],
+        answer: 1,
+        explain: "Kalimat utama berisi gagasan utama sebuah paragraf."
+      },
+      {
+        q: "5. Planet terbesar dalam Tata Surya adalah...",
+        options: ["Saturnus", "Mars", "Jupiter", "Neptunus"],
+        answer: 2,
+        explain: "Jupiter merupakan planet dengan ukuran terbesar."
+      }
+    ];
+
+    /* ================= STATE APLIKASI ================= */
+    let isUnlocked = false;
+    let currentUserName = "";
+
+    let currentIdx = 0;
+    let correctCount = 0;
+    let usedAiInSession = false;
+    let sessionLogs = [];
+    let examFinished = false;
+
+    let isThinking = false;
+    let autoSolve = false;
+    let nextTimer = null;
+    let toastTimer = null;
+    let robotScale = 1;
+
+    const appShell = document.getElementById("appShell");
+    const nameGateOverlay = document.getElementById("nameGateOverlay");
+    const customNameInput = document.getElementById("customNameInput");
+    const gateError = document.getElementById("gateError");
+    const robotAnchor = document.getElementById("robotAnchor");
+    const robotFab = document.getElementById("robotFab");
+    const robotMenu = document.getElementById("robotMenu");
+    const robotStatus = document.getElementById("robotStatus");
+    const accurateToggle = document.getElementById("accurateToggle");
+    const customSecInput = document.getElementById("customSec");
+    const questionText = document.getElementById("questionText");
+    const optionsGrid = document.getElementById("optionsGrid");
+    const progressChip = document.getElementById("progressChip");
+    const aiNote = document.getElementById("aiNote");
+
+    /* ================= HELPER STORAGE ================= */
+    function readJSON(key, fallback) {
+      try {
+        const raw = localStorage.getItem(key);
+        return raw ? JSON.parse(raw) : fallback;
+      } catch {
+        return fallback;
+      }
+    }
+
+    function saveExamState() {
+      localStorage.setItem(STORAGE_KEYS.EXAM_STATE, JSON.stringify({
+        currentIdx,
+        correctCount,
+        usedAiInSession,
+        sessionLogs,
+        examFinished
+      }));
+    }
+
+    function persistSettings() {
+      const rect = robotAnchor.getBoundingClientRect();
+      const settings = {
+        accurate: accurateToggle.checked,
+        customSec: Math.max(1, parseInt(customSecInput.value) || 2),
+        autoRun: document.getElementById("autoRunToggle").checked,
+        robotScale,
+        robotLeft: rect.width ? rect.left : null,
+        robotTop: rect.height ? rect.top : null
+      };
+      localStorage.setItem(STORAGE_KEYS.SETTINGS, JSON.stringify(settings));
+    }
+
+    function persistNavState(tab, homeMode) {
+      const prev = readJSON(STORAGE_KEYS.NAV_STATE, { tab: "home", homeMode: "exam" });
+      localStorage.setItem(STORAGE_KEYS.NAV_STATE, JSON.stringify({
+        tab: tab || prev.tab,
+        homeMode: homeMode || prev.homeMode
+      }));
+    }
+
+    /* ================= WAJIB KETIK NAMA (SLIDER MUNCUL PERLAHAN) ================= */
+    customNameInput.addEventListener("input", () => {
+      if (customNameInput.value.trim()) {
+        gateError.style.display = "none";
+      }
+    });
+
+    customNameInput.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") confirmNameSelection();
+    });
+
+    function lockFeaturesShowGate() {
+      isUnlocked = false;
+      appShell.classList.add("app-locked");
+      robotAnchor.classList.remove("unlocked");
+      robotMenu.classList.remove("open");
+      gateError.style.display = "none";
+
+      // Slider muncul perlahan
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          nameGateOverlay.classList.add("open");
+          setTimeout(() => customNameInput.focus(), 450);
+        });
+      });
+    }
+
+    function unlockFeaturesWithName(name, isInitialUnlock = false) {
+      currentUserName = name;
+      isUnlocked = true;
+      localStorage.setItem(STORAGE_KEYS.USER_NAME, name);
+
+      document.getElementById("activeUserNameLabel").textContent = name;
+      nameGateOverlay.classList.remove("open");
+      appShell.classList.remove("app-locked");
+      robotAnchor.classList.add("unlocked");
+
+      applySavedPositionAndLink(isInitialUnlock);
+    }
+
+    function confirmNameSelection() {
+      const typed = customNameInput.value.trim();
+      if (!typed) {
+        gateError.style.display = "block";
+        showToast("Wajib ketik nama terlebih dahulu!", true);
+        customNameInput.focus();
+        return;
+      }
+      unlockFeaturesWithName(typed, true);
+      showToast(`SUCCESS • Selamat datang, ${typed}`);
+    }
+
+    function openNameGateForSwitch() {
+      customNameInput.value = "";
+      lockFeaturesShowGate();
+    }
+
+    /* ================= SUARA AI BAHASA INGGRIS ================= */
+    let cachedEnglishVoice = null;
+    function loadEnglishVoice() {
+      if (!("speechSynthesis" in window)) return;
+      const voices = window.speechSynthesis.getVoices();
+      cachedEnglishVoice =
+        voices.find(v => v.lang === "en-US" && /natural|google|samantha|aria|zira/i.test(v.name)) ||
+        voices.find(v => v.lang.startsWith("en")) || null;
+    }
+    if ("speechSynthesis" in window) {
+      loadEnglishVoice();
+      window.speechSynthesis.onvoiceschanged = loadEnglishVoice;
+    }
+
+    function speakAiReadyEnglish() {
+      if (!("speechSynthesis" in window)) return;
+      window.speechSynthesis.cancel();
+      const utterance = new SpeechSynthesisUtterance("AI assistant ready to help");
+      utterance.lang = "en-US";
+      utterance.rate = 1.02;
+      utterance.pitch = 1.05;
+      if (cachedEnglishVoice) utterance.voice = cachedEnglishVoice;
+      window.speechSynthesis.speak(utterance);
+    }
+
+    /* ================= UJIAN & PROGRES ================= */
+    function renderQuestion() {
+      clearTimeout(nextTimer);
+      const item = questions[currentIdx];
+      progressChip.textContent = `Soal ${currentIdx + 1} / ${questions.length}`;
+      questionText.textContent = item.q;
+      aiNote.style.display = "none";
+
+      const keys = ["A", "B", "C", "D"];
+      optionsGrid.innerHTML = "";
+      item.options.forEach((opt, i) => {
+        const btn = document.createElement("button");
+        btn.className = "option-btn";
+        btn.innerHTML = `<span class="opt-key">${keys[i]}</span><span>${opt}</span>`;
+        btn.onclick = () => submitAnswer(i, false);
+        optionsGrid.appendChild(btn);
+      });
+    }
+
+    function submitAnswer(chosenIdx, byAi) {
+      if (!isUnlocked) return;
+      const item = questions[currentIdx];
+      const buttons = optionsGrid.querySelectorAll(".option-btn");
+      buttons.forEach(b => b.disabled = true);
+
+      const isCorrect = chosenIdx === item.answer;
+      if (byAi) usedAiInSession = true;
+
+      if (isCorrect) {
+        buttons[chosenIdx].classList.add("correct");
+        correctCount++;
+      } else {
+        buttons[chosenIdx].classList.add("wrong");
+        buttons[item.answer].classList.add("correct");
+      }
+
+      sessionLogs.push({
+        q: item.q,
+        chosenText: item.options[chosenIdx],
+        correctText: item.options[item.answer],
+        isCorrect,
+        byAi
+      });
+
+      aiNote.style.display = "block";
+      aiNote.innerHTML = `<strong>${byAi ? "AI:" : "Pembahasan:"}</strong> ${item.explain}`;
+
+      const delaySec = Math.max(1, parseInt(customSecInput.value) || 2);
+      const isLast = currentIdx >= questions.length - 1;
+      robotStatus.textContent = isLast ? "Menyelesaikan ujian..." : `Lanjut (${delaySec}d)...`;
+
+      if (!isLast) saveExamState();
+
+      nextTimer = setTimeout(() => {
+        if (isLast) {
+          autoSolve = false;
+          examFinished = true;
+          updateAutoBtn();
+          robotStatus.textContent = "Ujian Selesai";
+          saveExamState();
+          saveExamToHistory();
+          showFinishModal();
+        } else {
+          currentIdx++;
+          saveExamState();
+          renderQuestion();
+          robotStatus.textContent = "Siap";
+          if (autoSolve) triggerAiSolve();
+        }
+      }, delaySec * 1000);
+    }
+
+    /* ================= RIWAYAT UJIAN ================= */
+    function getHistory() {
+      return readJSON(STORAGE_KEYS.HISTORY, []);
+    }
+
+    function saveExamToHistory() {
+      const list = getHistory();
+      list.unshift({
+        id: Date.now(),
+        userName: currentUserName || "Peserta",
+        date: new Date().toLocaleString("id-ID", {
+          day: "2-digit", month: "short", year: "numeric",
+          hour: "2-digit", minute: "2-digit"
+        }),
+        correct: correctCount,
+        total: questions.length,
+        mode: usedAiInSession ? (accurateToggle.checked ? "AI Akurat (1d)" : "AI Standard") : "Manual",
+        details: sessionLogs
+      });
+      localStorage.setItem(STORAGE_KEYS.HISTORY, JSON.stringify(list));
+      renderHistory();
+    }
+
+    function renderHistory() {
+      const container = document.getElementById("historyList");
+      const list = getHistory();
+
+      if (!list.length) {
+        container.innerHTML = `
+          <div class="empty-history">
+            <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"></circle>
+              <polyline points="12 6 12 12 16 14"></polyline>
+            </svg>
+            <div>Belum ada riwayat ujian tersimpan.</div>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = "";
+      list.forEach((item) => {
+        const card = document.createElement("div");
+        card.className = "history-item";
+        card.onclick = () => card.classList.toggle("expanded");
+
+        const detailsHtml = (item.details || []).map(d => `
+          <div class="detail-line ${d.isCorrect ? "" : "is-wrong"}">
+            <div style="font-weight:600; margin-bottom:2px;">${d.q}</div>
+            <div>Jawaban: <strong>${d.chosenText}</strong> ${d.isCorrect ? "(Benar)" : `(Salah • Kunci: ${d.correctText})`}</div>
+          </div>
+        `).join("");
+
+        card.innerHTML = `
+          <div class="history-item-top">
+            <div class="history-meta">
+              <span class="history-date">${item.date} • Ketuk untuk detail</span>
+              <div class="history-badges">
+                <span class="history-user-badge">${item.userName || "Peserta"}</span>
+                <span class="history-mode-badge">Mode: ${item.mode}</span>
+              </div>
+            </div>
+            <div class="history-score">Skor ${item.correct} / ${item.total}</div>
+          </div>
+          <div class="history-details">${detailsHtml}</div>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    function clearHistory() {
+      localStorage.removeItem(STORAGE_KEYS.HISTORY);
+      renderHistory();
+      showToast("SUCCESS • Riwayat ujian dihapus");
+    }
+
+    /* ================= MODAL SELESAI (SLIDER MUNCUL PERLAHAN) ================= */
+    function showFinishModal() {
+      document.getElementById("finishScoreText").textContent =
+        `${currentUserName}, seluruh ${questions.length} soal telah dijawab (Benar: ${correctCount} / ${questions.length}).`;
+      document.getElementById("finishModal").classList.add("open");
+      showToast("SUCCESS • Semua ujian telah selesai");
+    }
+
+    function closeFinishModal() {
+      document.getElementById("finishModal").classList.remove("open");
+    }
+
+    function viewHistoryFromFinish() {
+      closeFinishModal();
+      switchBottomTab("history");
+    }
+
+    function restartExam() {
+      closeFinishModal();
+      currentIdx = 0;
+      correctCount = 0;
+      usedAiInSession = false;
+      sessionLogs = [];
+      examFinished = false;
+      saveExamState();
+      renderQuestion();
+      robotStatus.textContent = "Siap";
+    }
+
+    /* ================= AI ROBOT ================= */
+    function triggerAiSolve() {
+      if (!isUnlocked || isThinking || examFinished) return;
+      switchBottomTab("home");
+      setHomeMode("exam");
+
+      isThinking = true;
+      const isAccurate = accurateToggle.checked;
+      const thinkTime = isAccurate ? 1000 : Math.max(1, parseInt(customSecInput.value) || 2) * 1000;
+
+      robotFab.classList.add("thinking");
+      robotStatus.textContent = isAccurate ? "Berpikir cepat (1d)..." : `Memproses (${thinkTime / 1000}d)...`;
+
+      setTimeout(() => {
+        robotFab.classList.remove("thinking");
+        isThinking = false;
+
+        const item = questions[currentIdx];
+        let chosen = item.answer;
+        if (!isAccurate && Math.random() < 0.25) {
+          chosen = (item.answer + 1) % item.options.length;
+        }
+
+        showToast("SUCCESS • Jawaban AI diterapkan");
+        submitAnswer(chosen, true);
+      }, thinkTime);
+    }
+
+    function toggleAutoSolve() {
+      if (!isUnlocked) return;
+      autoSolve = !autoSolve;
+      updateAutoBtn();
+      if (autoSolve && !isThinking && !examFinished) triggerAiSolve();
+    }
+
+    function updateAutoBtn() {
+      const btn = document.getElementById("autoSolveBtn");
+      btn.classList.toggle("active", autoSolve);
+      btn.textContent = autoSolve ? "Auto Jawab: ON" : "Auto Jawab: OFF";
+    }
+
+    /* ================= TOAST ================= */
+    function showToast(msg, isWarn = false) {
+      const toast = document.getElementById("topToast");
+      toast.classList.toggle("warn", isWarn);
+      document.getElementById("toastText").textContent = msg;
+      toast.classList.add("show");
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => toast.classList.remove("show"), 2400);
+    }
+
+    /* ================= NAVIGASI & LINK ================= */
+    function switchBottomTab(tab) {
+      if (!isUnlocked) return;
+      document.getElementById("homeSection").classList.toggle("active", tab === "home");
+      document.getElementById("historySection").classList.toggle("active", tab === "history");
+      document.getElementById("linkSection").classList.toggle("active", tab === "link");
+
+      document.getElementById("navHome").classList.toggle("active", tab === "home");
+      document.getElementById("navHistory").classList.toggle("active", tab === "history");
+      document.getElementById("navLink").classList.toggle("active", tab === "link");
+
+      persistNavState(tab, null);
+      if (tab === "history") renderHistory();
+    }
+
+    function setHomeMode(mode) {
+      const isExam = mode === "exam";
+      document.getElementById("examView").style.display = isExam ? "block" : "none";
+      document.getElementById("webView").style.display = isExam ? "none" : "block";
+      document.getElementById("pillExam").classList.toggle("active", isExam);
+      document.getElementById("pillWeb").classList.toggle("active", !isExam);
+      if (isUnlocked) persistNavState(null, mode);
+    }
+
+    function normalizeUrl(raw) {
+      let url = raw.trim();
+      if (!url) return "";
+      if (!/^https?:\/\//i.test(url)) url = "https://" + url;
+      return url;
+    }
+
+    function saveUrl() {
+      if (!isUnlocked) return;
+      const url = normalizeUrl(document.getElementById("urlInput").value);
+      if (!url) {
+        showToast("Masukkan link terlebih dahulu", true);
+        return;
+      }
+      document.getElementById("urlInput").value = url;
+      localStorage.setItem(STORAGE_KEYS.SAVED_LINK, url);
+      persistSettings();
+      showToast("SUCCESS • Link tersimpan");
+
+      if (document.getElementById("autoRunToggle").checked) {
+        runUrlToHome();
+      }
+    }
+
+    function runUrlToHome() {
+      if (!isUnlocked) return;
+      const url = normalizeUrl(document.getElementById("urlInput").value);
+      if (!url) {
+        showToast("Masukkan link terlebih dahulu", true);
+        return;
+      }
+      document.getElementById("urlInput").value = url;
+      localStorage.setItem(STORAGE_KEYS.SAVED_LINK, url);
+
+      document.getElementById("homeIframe").src = url;
+      document.getElementById("activeUrlLabel").textContent = url;
+      document.getElementById("openTabFallback").href = url;
+
+      switchBottomTab("home");
+      setHomeMode("web");
+      showToast("SUCCESS • Web berjalan di Home");
+    }
+
+    /* ================= TOMBOL ROBOT: POSISI, SUARA EN, MENU, DRAG & RESIZE ================= */
+    function setDefaultRobotPosition() {
+      const left = Math.max(16, (window.innerWidth - 64) / 2);
+      const top = Math.max(80, window.innerHeight - 175);
+      robotAnchor.style.left = left + "px";
+      robotAnchor.style.top = top + "px";
+    }
+
+    function scaleRobot(delta) {
+      robotScale = Math.min(1.5, Math.max(0.75, robotScale + delta));
+      robotFab.style.transform = `scale(${robotScale})`;
+      persistSettings();
+    }
+
+    let dragging = false, hasMoved = false, startX, startY, initLeft, initTop;
+
+    robotFab.addEventListener("pointerdown", (e) => {
+      if (!isUnlocked) return;
+      dragging = true;
+      hasMoved = false;
+      startX = e.clientX;
+      startY = e.clientY;
+      const rect = robotAnchor.getBoundingClientRect();
+      initLeft = rect.left;
+      initTop = rect.top;
+      robotFab.setPointerCapture(e.pointerId);
+    });
+
+    robotFab.addEventListener("pointermove", (e) => {
+      if (!dragging) return;
+      const dx = e.clientX - startX;
+      const dy = e.clientY - startY;
+      if (Math.hypot(dx, dy) > 6) hasMoved = true;
+
+      if (hasMoved) {
+        const maxL = window.innerWidth - 70;
+        const maxT = window.innerHeight - 75;
+        robotAnchor.style.left = Math.min(Math.max(6, initLeft + dx), maxL) + "px";
+        robotAnchor.style.top = Math.min(Math.max(10, initTop + dy), maxT) + "px";
+      }
+    });
+
+    robotFab.addEventListener("pointerup", () => {
+      if (!dragging) return;
+      dragging = false;
+      if (hasMoved) {
+        persistSettings();
+      } else {
+        speakAiReadyEnglish();
+        robotMenu.classList.toggle("open");
+      }
+    });
+
+    robotFab.addEventListener("pointercancel", () => { dragging = false; });
+
+    document.addEventListener("pointerdown", (e) => {
+      if (!robotAnchor.contains(e.target)) {
+        robotMenu.classList.remove("open");
+      }
+    });
+
+    /* ================= RESTORE STATE SAAT REFRESH ================= */
+    function applySavedPositionAndLink(isInitialUnlock) {
+      const settings = readJSON(STORAGE_KEYS.SETTINGS, null);
+      if (settings) {
+        // Switch TIDAK otomatis ON: hanya ON jika sebelumnya user mengaktifkan secara eksplisit (true)
+        accurateToggle.checked = settings.accurate === true;
+        customSecInput.value = settings.customSec || 2;
+        document.getElementById("autoRunToggle").checked = settings.autoRun === true;
+        robotScale = settings.robotScale || 1;
+        robotFab.style.transform = `scale(${robotScale})`;
+
+        if (settings.robotLeft !== null && settings.robotTop !== null) {
+          robotAnchor.style.left = Math.min(Math.max(6, settings.robotLeft), window.innerWidth - 70) + "px";
+          robotAnchor.style.top = Math.min(Math.max(10, settings.robotTop), window.innerHeight - 75) + "px";
+        } else {
+          setDefaultRobotPosition();
+        }
+      } else {
+        accurateToggle.checked = false;
+        document.getElementById("autoRunToggle").checked = false;
+        setDefaultRobotPosition();
+      }
+
+      const savedLink = localStorage.getItem(STORAGE_KEYS.SAVED_LINK);
+      const navState = readJSON(STORAGE_KEYS.NAV_STATE, { tab: "home", homeMode: "exam" });
+
+      if (savedLink) {
+        document.getElementById("urlInput").value = savedLink;
+        if (document.getElementById("autoRunToggle").checked || navState.homeMode === "web") {
+          document.getElementById("homeIframe").src = savedLink;
+          document.getElementById("activeUrlLabel").textContent = savedLink;
+          document.getElementById("openTabFallback").href = savedLink;
+        }
+      }
+
+      if (isInitialUnlock && savedLink && document.getElementById("autoRunToggle").checked) {
+        switchBottomTab("home");
+        setHomeMode("web");
+      } else {
+        switchBottomTab(navState.tab || "home");
+        setHomeMode(navState.homeMode === "web" && savedLink ? "web" : "exam");
+      }
+    }
+
+    window.addEventListener("DOMContentLoaded", () => {
+      const savedExam = readJSON(STORAGE_KEYS.EXAM_STATE, null);
+      if (savedExam) {
+        currentIdx = Math.min(savedExam.currentIdx || 0, questions.length - 1);
+        correctCount = savedExam.correctCount || 0;
+        usedAiInSession = !!savedExam.usedAiInSession;
+        sessionLogs = Array.isArray(savedExam.sessionLogs) ? savedExam.sessionLogs : [];
+        examFinished = !!savedExam.examFinished;
+      }
+
+      renderQuestion();
+      renderHistory();
+
+      const savedUser = localStorage.getItem(STORAGE_KEYS.USER_NAME);
+      if (savedUser) {
+        unlockFeaturesWithName(savedUser, false);
+        if (examFinished) {
+          showFinishModal();
+        }
+      } else {
+        lockFeaturesShowGate();
+      }
+    });
+  </script>
+</body>
+</html>
